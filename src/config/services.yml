@@ -28,4 +28,5 @@ services:
         alias: League\Flysystem\Adapter\Local
 
     # Git
-    GitWrapper\GitWrapper: ~
+    GitWrapper\GitWrapper:
+        factory: ['@Rector\NAI\Git\GitWrapperFactory', 'create']

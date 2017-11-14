@@ -5,7 +5,6 @@ namespace Rector\NAI\Application;
 use Github\Api\PullRequest;
 use Github\Api\Repo;
 use Github\Client;
-use GitWrapper\GitWrapper;
 use Rector\NAI\Composer\ComposerUpdater;
 use Rector\NAI\Git\GitRepository;
 use Rector\NAI\Github\GithubApi;
@@ -32,11 +31,6 @@ final class Application
     private $workroomDirectory;
 
     /**
-     * @var GitWrapper
-     */
-    private $gitWrapper;
-
-    /**
      * @var ComposerUpdater
      */
     private $composerUpdater;
@@ -50,7 +44,6 @@ final class Application
         string $workroomDirectory,
         ParameterProvider $parameterProvider,
         Client $client,
-        GitWrapper $gitWrapper,
         ComposerUpdater $composerUpdater,
         GitRepository $gitRepository,
         SymfonyStyle $symfonyStyle
@@ -58,7 +51,6 @@ final class Application
         $this->parameterProvider = $parameterProvider;
         $this->client = $client;
         $this->workroomDirectory = $workroomDirectory;
-        $this->gitWrapper = $gitWrapper;
         $this->composerUpdater = $composerUpdater;
         $this->gitRepository = $gitRepository;
         $this->symfonyStyle = $symfonyStyle;
@@ -67,9 +59,6 @@ final class Application
     public function run(): void
     {
         $this->symfonyStyle->title('Narrow Artificial Intelligence in DA Place!');
-
-        // consider moving to factory
-        $this->gitWrapper->setPrivateKey($this->parameterProvider->provideParameter('git_key_path'));
 
         $packageName = $this->parameterProvider->provideParameter('repository');
         [$vendorName, $subName] = explode('/', $packageName);
