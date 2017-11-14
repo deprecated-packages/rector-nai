@@ -4,6 +4,7 @@ namespace Rector\NAI\Application;
 
 use Github\Api\PullRequest;
 use Github\Api\Repo;
+use GitWrapper\GitWorkingCopy;
 use Nette\Utils\Strings;
 use Rector\NAI\Composer\ComposerUpdater;
 use Rector\NAI\Contract\Runner\RunnerInterface;
@@ -106,25 +107,10 @@ final class Application
         // use runners here!!
         $this->runRunners($repositoryDirectory);
 
-        return;
-
-        // push!
-        $message = $this->parameterProvider->provideParameter('commit_message');
-
-        if ($gitWorkingCopy->hasChanges()) {
-            $gitWorkingCopy->add('*');
-            $gitWorkingCopy->commit($message);
-            $gitWorkingCopy->push('origin', $this->branchName);
+        if (! $gitWorkingCopy->hasChanges()) {
+            return;
         }
-
-        // send PR
-
-        $this->pullRequestApi->create($organizationName, $subName, [
-            'base' => 'master',
-            'head' => $this->parameterProvider->provideParameter('github_name') . ':' . $this->branchName,
-            'title' => ucfirst($message),
-            'body' => ''
-        ]);
+        $this->pushAndSendPullRequest($gitWorkingCopy, $organizationName, $subName);
 
         $this->symfonyStyle->success('Work is done!');
     }
@@ -144,7 +130,26 @@ final class Application
     private function runRunners(string $repositoryDirectory): void
     {
         foreach ($this->runners as $runner) {
+            if (! $runner->isActive()) {
+                continue;
+            }
+
             $runner->run($repositoryDirectory);
         }
+    }
+
+    private function pushAndSendPullRequest(GitWorkingCopy $gitWorkingCopy, string $organizationName, string $subName): void
+    {
+        $message = $this->parameterProvider->provideParameter('commit_message');
+        $gitWorkingCopy->add('*');
+        $gitWorkingCopy->commit($message);
+        $gitWorkingCopy->push('origin', $this->branchName);
+
+        $this->pullRequestApi->create($organizationName, $subName, [
+            'base' => 'master',
+            'head' => $this->parameterProvider->provideParameter('github_name') . ':' . $this->branchName,
+            'title' => ucfirst($message),
+            'body' => ''
+        ]);
     }
 }
