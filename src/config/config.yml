@@ -1,5 +1,6 @@
 imports:
     - { resource: 'services.yml' }
+    - { resource: 'external-services.yml' }
 
 parameters:
     workroom_directory: '%kernel.project_dir%/workroom'

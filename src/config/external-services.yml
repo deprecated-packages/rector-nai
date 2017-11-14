@@ -1,0 +1,26 @@
+services:
+    _defaults:
+        autowire: true
+
+    Symplify\PackageBuilder\Parameter\ParameterProvider: ~
+
+    Symfony\Component\Console\Style\SymfonyStyle:
+        factory: ['Symplify\PackageBuilder\Console\Style\SymfonyStyleFactory', 'create']
+
+    # Github
+    Github\Client:
+        factory: ['@Rector\NAI\Github\ClientFactory', 'create']
+    Github\Api\Repo: ~
+    Github\Api\PullRequest: ~
+
+    # Github Client Cache
+    League\Flysystem\Adapter\Local:
+        arguments: ['%kernel.cache_dir%/github']
+    League\Flysystem\Filesystem: ~
+    Cache\Adapter\Filesystem\FilesystemCachePool: ~
+    League\Flysystem\AdapterInterface:
+        alias: League\Flysystem\Adapter\Local
+
+    # Git
+    GitWrapper\GitWrapper:
+        factory: ['@Rector\NAI\Git\GitWrapperFactory', 'create']
