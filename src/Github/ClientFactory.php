@@ -4,7 +4,7 @@ namespace Rector\NAI\Github;
 
 use Cache\Adapter\Filesystem\FilesystemCachePool;
 use Github\Client;
-use Symplify\PackageBuilder\Adapter\Symfony\Parameter\ParameterProvider;
+use Symplify\PackageBuilder\Parameter\ParameterProvider;
 
 final class ClientFactory
 {

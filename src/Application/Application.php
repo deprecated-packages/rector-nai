@@ -72,6 +72,9 @@ final class Application
 
         $this->symfonyStyle->success('Fork created');
 
+        dump($repository);
+        die;
+
         $repositoryDirectory = $this->workroomDirectory . '/' . $repository['name'];
 
         // get working directory for git
