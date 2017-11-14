@@ -12,6 +12,7 @@ final class ClientFactory
      * @var FilesystemCachePool
      */
     private $filesystemCachePool;
+
     /**
      * @var ParameterProvider
      */

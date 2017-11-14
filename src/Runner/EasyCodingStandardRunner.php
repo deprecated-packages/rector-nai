@@ -11,7 +11,7 @@ use Symfony\Component\Process\Process;
 final class EasyCodingStandardRunner implements RunnerInterface
 {
     /**
-     * @var string
+     * @var string|null
      */
     private $ecsLevel;
 
@@ -25,7 +25,7 @@ final class EasyCodingStandardRunner implements RunnerInterface
      */
     private $sourceResolver;
 
-    public function __construct(string $ecsLevel, SymfonyStyle $symfonyStyle, SourceResolver $sourceResolver)
+    public function __construct(?string $ecsLevel, SymfonyStyle $symfonyStyle, SourceResolver $sourceResolver)
     {
         $this->ecsLevel = $ecsLevel;
         $this->symfonyStyle = $symfonyStyle;

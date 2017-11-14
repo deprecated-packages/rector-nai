@@ -6,6 +6,7 @@ use Github\Api\PullRequest;
 use Github\Api\Repo;
 use Nette\Utils\Strings;
 use Rector\NAI\Composer\ComposerUpdater;
+use Rector\NAI\Contract\Runner\RunnerInterface;
 use Rector\NAI\Git\GitRepository;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symplify\PackageBuilder\Parameter\ParameterProvider;
@@ -47,6 +48,11 @@ final class Application
      */
     private $branchName;
 
+    /**
+     * @var RunnerInterface[]
+     */
+    private $runners = [];
+
     public function __construct(
         string $workroomDirectory,
         string $branchName,
@@ -65,6 +71,11 @@ final class Application
         $this->repositoryApi = $repositoryApi;
         $this->pullRequestApi = $pullRequestApi;
         $this->branchName = $branchName;
+    }
+
+    public function addRunner(RunnerInterface $runner): void
+    {
+        $this->runners[] = $runner;
     }
 
     public function run(): void
@@ -92,18 +103,10 @@ final class Application
         $this->gitRepository->prepareRectorBranch($gitWorkingCopy);
         $this->symfonyStyle->success(sprintf('Switched to %s branch',  $this->branchName));
 
-        return;
-
         // use runners here!!
+        $this->runRunners($repositoryDirectory);
 
-        // run ecs
-        $this->runEasyCodingStandard($repositoryDirectory);
-
-        // run rector
-        $this->runRector($repositoryDirectory);
-
-        // run tests
-        $this->runTests($repositoryDirectory);
+        return;
 
         // push!
         $message = $this->parameterProvider->provideParameter('commit_message');
@@ -136,5 +139,12 @@ final class Application
         }
 
         return explode('/', $repository);
+    }
+
+    private function runRunners(string $repositoryDirectory): void
+    {
+        foreach ($this->runners as $runner) {
+            $runner->run($repositoryDirectory);
+        }
     }
 }

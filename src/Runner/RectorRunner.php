@@ -11,7 +11,7 @@ use Symfony\Component\Process\Process;
 final class RectorRunner implements RunnerInterface
 {
     /**
-     * @var string
+     * @var string|null
      */
     private $rectorLevel;
 
@@ -25,7 +25,7 @@ final class RectorRunner implements RunnerInterface
      */
     private $sourceResolver;
 
-    public function __construct(string $rectorLevel, SymfonyStyle $symfonyStyle, SourceResolver $sourceResolver)
+    public function __construct(?string $rectorLevel, SymfonyStyle $symfonyStyle, SourceResolver $sourceResolver)
     {
         $this->rectorLevel = $rectorLevel;
         $this->symfonyStyle = $symfonyStyle;
