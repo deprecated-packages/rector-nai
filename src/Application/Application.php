@@ -53,7 +53,8 @@ final class Application
         Client $client,
         GitWrapper $gitWrapper,
         ComposerUpdater $composerUpdater,
-        GitRepository $gitRepository
+        GitRepository $gitRepository,
+        SymfonyStyle $symfonyStyle
     ) {
         $this->parameterProvider = $parameterProvider;
         $this->client = $client;
@@ -61,10 +62,14 @@ final class Application
         $this->gitWrapper = $gitWrapper;
         $this->composerUpdater = $composerUpdater;
         $this->gitRepository = $gitRepository;
+        $this->symfonyStyle = $symfonyStyle;
     }
 
     public function run(): void
     {
+        $this->symfonyStyle->title('Narrow Artificial Intelligence in DA Place!');
+
+
         // consider moving to factory
         $this->gitWrapper->setPrivateKey($this->parameterProvider->provide()['git_key_path']);
 
@@ -78,11 +83,14 @@ final class Application
         $repository = $repositoryApi->forks()
             ->create($vendorName, $subName);
 
+        $this->symfonyStyle->success('Fork created');
+
         $repositoryDirectory = $this->workroomDirectory . '/' . $repository['name'];
 
         // get working directory for git
         $gitWorkingCopy = $this->gitRepository->getGitWorkingCopy($repositoryDirectory, $repository);
 
+        // todo: move to config!
         $gitWorkingCopy->config('user.name', 'TomasVotruba');
         $gitWorkingCopy->config('user.email', 'tomas.vot@gmail.com');
 
@@ -93,19 +101,26 @@ final class Application
         $gitWorkingCopy->fetch('upstream');
         $gitWorkingCopy->merge('upstream/master');
 
-        // prepare new branch
-        $this->gitRepository->prepareRectorBranch($gitWorkingCopy);
+        $this->symfonyStyle->success('Fork synced');
 
         // update dependencies
         $this->composerUpdater->installInDirectory($repositoryDirectory);
+        $this->symfonyStyle->success('Composer dependencies installed');
+
+        // prepare new branch
+        $this->gitRepository->prepareRectorBranch($gitWorkingCopy);
+        $this->symfonyStyle->success(sprintf('Switched to %s branch', GitRepository::RECTOR_BRANCH_NAME));
 
         // run ecs
-        $this->runEasyCodingStandard($repositoryDirectory);
+//        $this->runEasyCodingStandard($repositoryDirectory);
 
-        // run rector?
+        // run rector
+        $this->runRector($repositoryDirectory);
 
         // run tests
         $this->runTests($repositoryDirectory);
+
+        die;
 
         // push!
         $message = $this->parameterProvider->provide()['commit_message'] ?? 'code rectored';
@@ -122,36 +137,30 @@ final class Application
         $githubPullRequestApi = $this->client->api('pull_request');
         $githubPullRequestApi->create($vendorName, $subName, [
             'base' => 'master',
+            // todo: move name to config!
             'head' => 'TomasVotruba:' . GitRepository::RECTOR_BRANCH_NAME,
             'title' => ucfirst($message),
             'body' => ''
         ]);
 
-        $symfonyStyle = SymfonyStyleFactory::create();
-        $symfonyStyle->success('Work is done!');
+        $this->symfonyStyle->success('Work is done!');
     }
 
     private function runEasyCodingStandard(string $repositoryDirectory): void
     {
-        $source = [];
-
         $level = $this->parameterProvider->provide()['ecs_level'] ?? null;
         if ($level === null) {
             return;
         }
 
-        if (file_exists($repositoryDirectory . '/src')) {
-            $source[] = $repositoryDirectory . '/src';
-        }
-        if (file_exists($repositoryDirectory . '/tests')) {
-            $source[] = $repositoryDirectory  . '/tests';
-        }
-
-        $process = new Process(sprintf(
+        $commandLine = sprintf(
             'vendor/bin/ecs check %s --config vendor/symplify/easy-coding-standard/config/%s.neon --fix',
-            implode(' ', $source),
+            implode(' ', $this->resolveSource($repositoryDirectory)),
             $level
-        ));
+        );
+
+        $process = new Process($commandLine);
+        $this->symfonyStyle->writeln('Running: ' . $commandLine);
 
         $process->run();
 
@@ -162,16 +171,58 @@ final class Application
 
     private function runTests(string $repositoryDirectory): void
     {
-        $process = new Process(sprintf(
+        $commandLine = sprintf(
             '%s/vendor/phpunit/phpunit/phpunit %s', # safest path
             $repositoryDirectory,
             $repositoryDirectory . '/tests' // improve
-        ));
+        );
+
+        $process = new Process($commandLine);
+        $this->symfonyStyle->writeln('Running: ' . $commandLine);
 
         $process->run();
 
         if (! $process->isSuccessful()) {
             throw new ProcessFailedException($process);
         }
+    }
+
+    private function runRector(string $repositoryDirectory): void
+    {
+        $level = $this->parameterProvider->provide()['rector_level'] ?? null;
+        if ($level === null) {
+            return;
+        }
+
+        $commandLine = sprintf(
+            'vendor/bin/rector process %s --level %s',
+            implode(' ', $this->resolveSource($repositoryDirectory)),
+            $level
+        );
+
+        $process = new Process($commandLine);
+        $this->symfonyStyle->writeln('Running: ' . $commandLine);
+        $process->run();
+
+        if (! $process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
+    }
+
+    /**
+     * @return string[]
+     */
+    private function resolveSource(string $repositoryDirectory): array
+    {
+        $source = [];
+
+        if (file_exists($repositoryDirectory . '/src')) {
+            $source[] = $repositoryDirectory . '/src';
+        }
+        if (file_exists($repositoryDirectory . '/tests')) {
+            $source[] = $repositoryDirectory . '/tests';
+        }
+
+        return $source;
     }
 }
