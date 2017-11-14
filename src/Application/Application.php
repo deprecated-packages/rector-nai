@@ -2,15 +2,18 @@
 
 namespace Rector\NAI\Application;
 
+use Github\Api\PullRequest;
 use Github\Api\Repo;
 use Github\Client;
 use GitWrapper\GitWrapper;
 use Rector\NAI\Composer\ComposerUpdater;
 use Rector\NAI\Git\GitRepository;
 use Rector\NAI\Github\GithubApi;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 use Symplify\PackageBuilder\Adapter\Symfony\Parameter\ParameterProvider;
+use Symplify\PackageBuilder\Console\Style\SymfonyStyleFactory;
 
 final class Application
 {
@@ -80,30 +83,52 @@ final class Application
         // get working directory for git
         $gitWorkingCopy = $this->gitRepository->getGitWorkingCopy($repositoryDirectory, $repository);
 
+        $gitWorkingCopy->config('user.name', 'TomasVotruba');
+        $gitWorkingCopy->config('user.email', 'tomas.vot@gmail.com');
+
+        // refresh repo, to have most up-to-date version
+        if (! $gitWorkingCopy->hasRemote('upstream')) {
+            $gitWorkingCopy->addRemote('upstream', $repository['source']['clone_url']);
+        }
+        $gitWorkingCopy->fetch('upstream');
+        $gitWorkingCopy->merge('upstream/master');
+
         // prepare new branch
         $this->gitRepository->prepareRectorBranch($gitWorkingCopy);
 
         // update dependencies
         $this->composerUpdater->installInDirectory($repositoryDirectory);
 
-//        $this->runEasyCodingStandard($repositoryDirectory);
+        // run ecs
+        $this->runEasyCodingStandard($repositoryDirectory);
 
         // run rector?
 
         // run tests
-//        $this->runTests($repositoryDirectory);
+        $this->runTests($repositoryDirectory);
 
         // push!
-        // always push to current branch - same as on local
-//        $this->gitWrapper->git('config --global push.default upstream');
+        $message = $this->parameterProvider->provide()['commit_message'] ?? 'code rectored';
 
         if ($gitWorkingCopy->hasChanges()) {
             $gitWorkingCopy->add('*');
-            $gitWorkingCopy->commit($this->parameterProvider->provide()['commit_message'] ?? 'code rectored');
+            $gitWorkingCopy->commit($message);
             $gitWorkingCopy->push('origin', GitRepository::RECTOR_BRANCH_NAME);
         }
 
         // send PR
+
+        /** @var PullRequest $githubPullRequestApi */
+        $githubPullRequestApi = $this->client->api('pull_request');
+        $githubPullRequestApi->create($vendorName, $subName, [
+            'base' => 'master',
+            'head' => 'TomasVotruba:' . GitRepository::RECTOR_BRANCH_NAME,
+            'title' => ucfirst($message),
+            'body' => ''
+        ]);
+
+        $symfonyStyle = SymfonyStyleFactory::create();
+        $symfonyStyle->success('Work is done!');
     }
 
     private function runEasyCodingStandard(string $repositoryDirectory): void
