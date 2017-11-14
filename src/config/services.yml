@@ -19,6 +19,8 @@ services:
     # Github
     Github\Client:
         factory: ['@Rector\NAI\Github\ClientFactory', 'create']
+    Github\Api\Repo: ~
+    Github\Api\PullRequest: ~
 
     League\Flysystem\Adapter\Local:
         arguments: ['%kernel.cache_dir%/github']

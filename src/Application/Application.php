@@ -4,10 +4,8 @@ namespace Rector\NAI\Application;
 
 use Github\Api\PullRequest;
 use Github\Api\Repo;
-use Github\Client;
 use Rector\NAI\Composer\ComposerUpdater;
 use Rector\NAI\Git\GitRepository;
-use Rector\NAI\Github\GithubApi;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
@@ -19,11 +17,6 @@ final class Application
      * @var ParameterProvider
      */
     private $parameterProvider;
-
-    /**
-     * @var Client
-     */
-    private $client;
 
     /**
      * @var string
@@ -40,20 +33,32 @@ final class Application
      */
     private $gitRepository;
 
+    /**
+     * @var Repo
+     */
+    private $repositoryApi;
+
+    /**
+     * @var PullRequest
+     */
+    private $pullRequestApi;
+
     public function __construct(
         string $workroomDirectory,
         ParameterProvider $parameterProvider,
-        Client $client,
         ComposerUpdater $composerUpdater,
         GitRepository $gitRepository,
-        SymfonyStyle $symfonyStyle
+        SymfonyStyle $symfonyStyle,
+        Repo $repositoryApi,
+        PullRequest $pullRequestApi
     ) {
         $this->parameterProvider = $parameterProvider;
-        $this->client = $client;
         $this->workroomDirectory = $workroomDirectory;
         $this->composerUpdater = $composerUpdater;
         $this->gitRepository = $gitRepository;
         $this->symfonyStyle = $symfonyStyle;
+        $this->repositoryApi = $repositoryApi;
+        $this->pullRequestApi = $pullRequestApi;
     }
 
     public function run(): void
@@ -63,17 +68,10 @@ final class Application
         $packageName = $this->parameterProvider->provideParameter('repository');
         [$vendorName, $subName] = explode('/', $packageName);
 
-        // fork it
-        // consider using directly Repo service - nicer api, right away :)
-        /** @var Repo $repositoryApi */
-        $repositoryApi = $this->client->api(GithubApi::REPOSITORY);
-        $repository = $repositoryApi->forks()
+        $repository = $this->repositoryApi->forks()
             ->create($vendorName, $subName);
 
         $this->symfonyStyle->success('Fork created');
-
-        dump($repository);
-        die;
 
         $repositoryDirectory = $this->workroomDirectory . '/' . $repository['name'];
 
@@ -122,9 +120,7 @@ final class Application
 
         // send PR
 
-        /** @var PullRequest $githubPullRequestApi */
-        $githubPullRequestApi = $this->client->api('pull_request');
-        $githubPullRequestApi->create($vendorName, $subName, [
+        $this->pullRequestApi->create($vendorName, $subName, [
             'base' => 'master',
             'head' => $this->parameterProvider->provideParameter('github_name') . ':' . GitRepository::RECTOR_BRANCH_NAME,
             'title' => ucfirst($message),
