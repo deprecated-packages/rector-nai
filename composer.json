@@ -1,6 +1,6 @@
 {
     "name": "rector/narrow-intelligence",
-    "description": "AI to automate and replace Tomas Votruba",
+    "description": "Narrow AI to automate and replace Tomas Votruba",
     "require": {
         "cache/filesystem-adapter": "^1.0",
         "cpliakas/git-wrapper": "^1.7",
