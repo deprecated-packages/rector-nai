@@ -60,9 +60,9 @@ final class Application
     private $isReadOnly;
 
     public function __construct(
+        bool $readOnly,
         string $workroomDirectory,
         string $branchName,
-        bool $readOnly,
         ParameterProvider $parameterProvider,
         ComposerUpdater $composerUpdater,
         GitRepository $gitRepository,
@@ -90,12 +90,12 @@ final class Application
     {
         $this->symfonyStyle->title('Narrow Artificial Intelligence in DA Place!');
 
-        [$organizationName, $subName] = $this->getOrganizationAndPackageName();
+        [$organizationName, $repositoryName] = $this->getOrganizationAndPackageName();
 
         $repository = $this->repositoryApi->forks()
-            ->create($organizationName, $subName);
+            ->create($organizationName, $repositoryName);
 
-        $this->symfonyStyle->note('Fork created');
+        $this->symfonyStyle->note(sprintf('Fork of "%s/%s" created', $organizationName, $repositoryName));
 
         $repositoryDirectory = $this->workroomDirectory . '/' . $repository['name'];
 
@@ -109,7 +109,7 @@ final class Application
 
         // prepare new branch
         $this->gitRepository->prepareRectorBranch($gitWorkingCopy);
-        $this->symfonyStyle->note(sprintf('Switched to %s branch',  $this->branchName));
+        $this->symfonyStyle->note(sprintf('Switched to "%s" branch',  $this->branchName));
 
         // use runners here!!
         $this->runRunners($repositoryDirectory);
@@ -124,7 +124,7 @@ final class Application
             return;
         }
 
-        $this->pushAndSendPullRequest($gitWorkingCopy, $organizationName, $subName);
+        $this->pushAndSendPullRequest($gitWorkingCopy, $organizationName, $repositoryName);
         $this->symfonyStyle->success('Work is done!');
     }
 

@@ -5,6 +5,7 @@
         "cache/filesystem-adapter": "^1.0",
         "cpliakas/git-wrapper": "^1.7",
         "knplabs/github-api": "^2.6",
+        "nette/di": "^2.4",
         "nikic/php-parser": "dev-master as 3.1.1",
         "nunomaduro/collision": "^1.1",
         "php-http/guzzle6-adapter": "^1.1",
