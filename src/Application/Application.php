@@ -12,8 +12,7 @@ use Rector\NAI\Github\GithubApi;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
-use Symplify\PackageBuilder\Adapter\Symfony\Parameter\ParameterProvider;
-use Symplify\PackageBuilder\Console\Style\SymfonyStyleFactory;
+use Symplify\PackageBuilder\Parameter\ParameterProvider;
 
 final class Application
 {
@@ -69,11 +68,10 @@ final class Application
     {
         $this->symfonyStyle->title('Narrow Artificial Intelligence in DA Place!');
 
-
         // consider moving to factory
-        $this->gitWrapper->setPrivateKey($this->parameterProvider->provide()['git_key_path']);
+        $this->gitWrapper->setPrivateKey($this->parameterProvider->provideParameter('git_key_path'));
 
-        $packageName = $this->parameterProvider->provide()['repository'];
+        $packageName = $this->parameterProvider->provideParameter('repository');
         [$vendorName, $subName] = explode('/', $packageName);
 
         // fork it
@@ -90,9 +88,8 @@ final class Application
         // get working directory for git
         $gitWorkingCopy = $this->gitRepository->getGitWorkingCopy($repositoryDirectory, $repository);
 
-        // todo: move to config!
-        $gitWorkingCopy->config('user.name', 'TomasVotruba');
-        $gitWorkingCopy->config('user.email', 'tomas.vot@gmail.com');
+        $gitWorkingCopy->config('user.name', $this->parameterProvider->provideParameter('git_name'));
+        $gitWorkingCopy->config('user.email', $this->parameterProvider->provideParameter('git_email'));
 
         // refresh repo, to have most up-to-date version
         if (! $gitWorkingCopy->hasRemote('upstream')) {
@@ -123,7 +120,7 @@ final class Application
         die;
 
         // push!
-        $message = $this->parameterProvider->provide()['commit_message'] ?? 'code rectored';
+        $message = $this->parameterProvider->provideParameter('commit_message');
 
         if ($gitWorkingCopy->hasChanges()) {
             $gitWorkingCopy->add('*');
@@ -137,8 +134,7 @@ final class Application
         $githubPullRequestApi = $this->client->api('pull_request');
         $githubPullRequestApi->create($vendorName, $subName, [
             'base' => 'master',
-            // todo: move name to config!
-            'head' => 'TomasVotruba:' . GitRepository::RECTOR_BRANCH_NAME,
+            'head' => $this->parameterProvider->provideParameter('github_name') . ':' . GitRepository::RECTOR_BRANCH_NAME,
             'title' => ucfirst($message),
             'body' => ''
         ]);
@@ -148,7 +144,7 @@ final class Application
 
     private function runEasyCodingStandard(string $repositoryDirectory): void
     {
-        $level = $this->parameterProvider->provide()['ecs_level'] ?? null;
+        $level = $this->parameterProvider->provideParameter('ecs_level');
         if ($level === null) {
             return;
         }
@@ -189,7 +185,7 @@ final class Application
 
     private function runRector(string $repositoryDirectory): void
     {
-        $level = $this->parameterProvider->provide()['rector_level'] ?? null;
+        $level = $this->parameterProvider->provideParameter('rector_level');
         if ($level === null) {
             return;
         }
