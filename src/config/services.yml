@@ -1,0 +1,29 @@
+services:
+    _defaults:
+        autowire: true
+
+    Rector\NAI\:
+        resource: ../../src
+        exclude: ../../src/{DependencyInjection/AppKernel.php}
+
+    Rector\NAI\Application\Application:
+        arguments: ['%workroom_directory%']
+        public: true
+
+    # 3rd party
+    Symplify\PackageBuilder\Adapter\Symfony\Parameter\ParameterProvider: ~
+
+    # Github
+    Github\Client:
+        factory: ['@Rector\NAI\Github\ClientFactory', 'create']
+
+    League\Flysystem\Adapter\Local:
+        arguments: ['%kernel.cache_dir%/github']
+    League\Flysystem\Filesystem: ~
+    Cache\Adapter\Filesystem\FilesystemCachePool: ~
+
+    League\Flysystem\AdapterInterface:
+        alias: League\Flysystem\Adapter\Local
+
+    # Git
+    GitWrapper\GitWrapper: ~

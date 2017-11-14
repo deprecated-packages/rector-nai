@@ -1,0 +1,5 @@
+rector.yml
+/cache
+/vendor
+/workroom
+composer.lock
