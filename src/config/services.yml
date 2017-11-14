@@ -18,6 +18,14 @@ services:
             - '%branch_name%'
         public: true
 
+    # runners
+    Rector\NAI\Runner\RectorRunner:
+        arguments: ['%rector_level%']
+
+    Rector\NAI\Runner\EasyCodingStandardRunner:
+        arguments: ['%ecs_level%']
+
+
     # 3rd party
     Symplify\PackageBuilder\Parameter\ParameterProvider: ~
 

@@ -8,8 +8,6 @@ use Nette\Utils\Strings;
 use Rector\NAI\Composer\ComposerUpdater;
 use Rector\NAI\Git\GitRepository;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Process\Process;
 use Symplify\PackageBuilder\Parameter\ParameterProvider;
 
 final class Application
@@ -96,6 +94,8 @@ final class Application
 
         return;
 
+        // use runners here!!
+
         // run ecs
         $this->runEasyCodingStandard($repositoryDirectory);
 
@@ -124,86 +124,6 @@ final class Application
         ]);
 
         $this->symfonyStyle->success('Work is done!');
-    }
-
-    private function runEasyCodingStandard(string $repositoryDirectory): void
-    {
-        $level = $this->parameterProvider->provideParameter('ecs_level');
-        if ($level === null) {
-            return;
-        }
-
-        $commandLine = sprintf(
-            'vendor/bin/ecs check %s --config vendor/symplify/easy-coding-standard/config/%s.neon --fix',
-            implode(' ', $this->resolveSource($repositoryDirectory)),
-            $level
-        );
-
-        $process = new Process($commandLine);
-        $this->symfonyStyle->writeln('Running: ' . $commandLine);
-
-        $process->run();
-
-        if (! $process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
-    }
-
-    private function runTests(string $repositoryDirectory): void
-    {
-        $commandLine = sprintf(
-            '%s/vendor/phpunit/phpunit/phpunit %s', # safest path
-            $repositoryDirectory,
-            $repositoryDirectory . '/tests' // improve
-        );
-
-        $process = new Process($commandLine);
-        $this->symfonyStyle->writeln('Running: ' . $commandLine);
-
-        $process->run();
-
-        if (! $process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
-    }
-
-    private function runRector(string $repositoryDirectory): void
-    {
-        $level = $this->parameterProvider->provideParameter('rector_level');
-        if ($level === null) {
-            return;
-        }
-
-        $commandLine = sprintf(
-            'vendor/bin/rector process %s --level %s',
-            implode(' ', $this->resolveSource($repositoryDirectory)),
-            $level
-        );
-
-        $process = new Process($commandLine);
-        $this->symfonyStyle->writeln('Running: ' . $commandLine);
-        $process->run();
-
-        if (! $process->isSuccessful()) {
-            throw new ProcessFailedException($process);
-        }
-    }
-
-    /**
-     * @return string[]
-     */
-    private function resolveSource(string $repositoryDirectory): array
-    {
-        $source = [];
-
-        if (file_exists($repositoryDirectory . '/src')) {
-            $source[] = $repositoryDirectory . '/src';
-        }
-        if (file_exists($repositoryDirectory . '/tests')) {
-            $source[] = $repositoryDirectory . '/tests';
-        }
-
-        return $source;
     }
 
     private function getOrganizationAndPackageName(): array
