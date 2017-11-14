@@ -11,7 +11,7 @@
         "rector/rector": "dev-master",
         "symfony/symfony": "v3.4.0-BETA4",
         "symplify/easy-coding-standard": "^2.5",
-        "symplify/package-builder": "^2.5"
+        "symplify/package-builder": "dev-master as 2.5"
     },
     "require-dev": {
         "tracy/tracy": "^2.4"
