@@ -12,6 +12,8 @@ services:
 
     # 3rd party
     Symplify\PackageBuilder\Adapter\Symfony\Parameter\ParameterProvider: ~
+    Symfony\Component\Console\Style\SymfonyStyle:
+        factory: ['Symplify\PackageBuilder\Console\Style\SymfonyStyleFactory', 'create']
 
     # Github
     Github\Client:
