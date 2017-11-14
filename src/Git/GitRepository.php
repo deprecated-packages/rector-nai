@@ -9,17 +9,27 @@ use Nette\Utils\Strings;
 final class GitRepository
 {
     /**
-     * @var string
-     */
-    public const RECTOR_BRANCH_NAME = 'rector-nai';
-
-    /**
      * @var GitWrapper
      */
     private $gitWrapper;
+    /**
+     * @var string
+     */
+    private $gitName;
+    /**
+     * @var string
+     */
+    private $gitEmail;
+    /**
+     * @var string
+     */
+    private $branchName;
 
-    public function __construct(GitWrapper $gitWrapper)
+    public function __construct(string $gitName, string $gitEmail, string $branchName, GitWrapper $gitWrapper)
     {
+        $this->gitName = $gitName;
+        $this->gitEmail = $gitEmail;
+        $this->branchName = $branchName;
         $this->gitWrapper = $gitWrapper;
     }
 
@@ -32,9 +42,16 @@ final class GitRepository
             return $this->gitWrapper->workingCopy($repositoryDirectory);
         }
 
-        return $this->gitWrapper->cloneRepository($repository['ssh_url'], $repositoryDirectory, [
+        $gitWorkingCopy = $this->gitWrapper->cloneRepository($repository['ssh_url'], $repositoryDirectory, [
             'depth' => 1
         ]);
+
+        $gitWorkingCopy->config('user.name', $this->gitName);
+        $gitWorkingCopy->config('user.email', $this->gitEmail);
+
+        $this->refreshFork($gitWorkingCopy, $repository);
+
+        return $gitWorkingCopy;
     }
 
     public function prepareRectorBranch(GitWorkingCopy $gitWorkingCopy): void
@@ -42,18 +59,31 @@ final class GitRepository
         $branchOutput = $gitWorkingCopy->branch()
             ->getOutput();
 
-        if (Strings::contains($branchOutput, '* ' . self::RECTOR_BRANCH_NAME)) {
+        if (Strings::contains($branchOutput, '* ' . $this->branchName)) {
             // already on branch
             return;
         }
 
-        if (Strings::contains($branchOutput, self::RECTOR_BRANCH_NAME)) {
+        if (Strings::contains($branchOutput, $this->branchName)) {
             // branch is there, go there
-            $gitWorkingCopy->checkout(self::RECTOR_BRANCH_NAME);
+            $gitWorkingCopy->checkout($this->branchName);
             return;
         }
 
         // branch is not here, create it
-        $gitWorkingCopy->checkoutNewBranch(self::RECTOR_BRANCH_NAME);
+        $gitWorkingCopy->checkoutNewBranch($this->branchName);
+    }
+
+    /**
+     * @param mixed[] $repository
+     */
+    private function refreshFork(GitWorkingCopy $gitWorkingCopy, array $repository): void
+    {
+        if (! $gitWorkingCopy->hasRemote('upstream')) {
+            $gitWorkingCopy->addRemote('upstream', $repository['source']['clone_url']);
+        }
+
+        $gitWorkingCopy->fetch('upstream');
+        $gitWorkingCopy->merge('upstream/master');
     }
 }

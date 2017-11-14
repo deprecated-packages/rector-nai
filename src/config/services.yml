@@ -6,8 +6,16 @@ services:
         resource: ../../src
         exclude: ../../src/{DependencyInjection/AppKernel.php}
 
+    Rector\NAI\Git\GitRepository:
+        arguments:
+            - '%git_name%'
+            - '%git_email%'
+            - '%branch_name%'
+
     Rector\NAI\Application\Application:
-        arguments: ['%workroom_directory%']
+        arguments:
+            - '%workroom_directory%'
+            - '%branch_name%'
         public: true
 
     # 3rd party

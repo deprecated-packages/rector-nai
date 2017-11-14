@@ -4,6 +4,7 @@ namespace Rector\NAI\Application;
 
 use Github\Api\PullRequest;
 use Github\Api\Repo;
+use Nette\Utils\Strings;
 use Rector\NAI\Composer\ComposerUpdater;
 use Rector\NAI\Git\GitRepository;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -43,8 +44,14 @@ final class Application
      */
     private $pullRequestApi;
 
+    /**
+     * @var string
+     */
+    private $branchName;
+
     public function __construct(
         string $workroomDirectory,
+        string $branchName,
         ParameterProvider $parameterProvider,
         ComposerUpdater $composerUpdater,
         GitRepository $gitRepository,
@@ -59,17 +66,17 @@ final class Application
         $this->symfonyStyle = $symfonyStyle;
         $this->repositoryApi = $repositoryApi;
         $this->pullRequestApi = $pullRequestApi;
+        $this->branchName = $branchName;
     }
 
     public function run(): void
     {
         $this->symfonyStyle->title('Narrow Artificial Intelligence in DA Place!');
 
-        $packageName = $this->parameterProvider->provideParameter('repository');
-        [$vendorName, $subName] = explode('/', $packageName);
+        [$organizationName, $subName] = $this->getOrganizationAndPackageName();
 
         $repository = $this->repositoryApi->forks()
-            ->create($vendorName, $subName);
+            ->create($organizationName, $subName);
 
         $this->symfonyStyle->success('Fork created');
 
@@ -77,17 +84,6 @@ final class Application
 
         // get working directory for git
         $gitWorkingCopy = $this->gitRepository->getGitWorkingCopy($repositoryDirectory, $repository);
-
-        $gitWorkingCopy->config('user.name', $this->parameterProvider->provideParameter('git_name'));
-        $gitWorkingCopy->config('user.email', $this->parameterProvider->provideParameter('git_email'));
-
-        // refresh repo, to have most up-to-date version
-        if (! $gitWorkingCopy->hasRemote('upstream')) {
-            $gitWorkingCopy->addRemote('upstream', $repository['source']['clone_url']);
-        }
-        $gitWorkingCopy->fetch('upstream');
-        $gitWorkingCopy->merge('upstream/master');
-
         $this->symfonyStyle->success('Fork synced');
 
         // update dependencies
@@ -96,10 +92,12 @@ final class Application
 
         // prepare new branch
         $this->gitRepository->prepareRectorBranch($gitWorkingCopy);
-        $this->symfonyStyle->success(sprintf('Switched to %s branch', GitRepository::RECTOR_BRANCH_NAME));
+        $this->symfonyStyle->success(sprintf('Switched to %s branch',  $this->branchName));
+
+        return;
 
         // run ecs
-//        $this->runEasyCodingStandard($repositoryDirectory);
+        $this->runEasyCodingStandard($repositoryDirectory);
 
         // run rector
         $this->runRector($repositoryDirectory);
@@ -107,22 +105,20 @@ final class Application
         // run tests
         $this->runTests($repositoryDirectory);
 
-        die;
-
         // push!
         $message = $this->parameterProvider->provideParameter('commit_message');
 
         if ($gitWorkingCopy->hasChanges()) {
             $gitWorkingCopy->add('*');
             $gitWorkingCopy->commit($message);
-            $gitWorkingCopy->push('origin', GitRepository::RECTOR_BRANCH_NAME);
+            $gitWorkingCopy->push('origin', $this->branchName);
         }
 
         // send PR
 
-        $this->pullRequestApi->create($vendorName, $subName, [
+        $this->pullRequestApi->create($organizationName, $subName, [
             'base' => 'master',
-            'head' => $this->parameterProvider->provideParameter('github_name') . ':' . GitRepository::RECTOR_BRANCH_NAME,
+            'head' => $this->parameterProvider->provideParameter('github_name') . ':' . $this->branchName,
             'title' => ucfirst($message),
             'body' => ''
         ]);
@@ -208,5 +204,17 @@ final class Application
         }
 
         return $source;
+    }
+
+    private function getOrganizationAndPackageName(): array
+    {
+        $repository = $this->parameterProvider->provideParameter('repository');
+
+        // remove https://github.com prefix
+        if (Strings::startsWith($repository, 'https://github.com/')) {
+            $repository = substr($repository, strlen('https://github.com/') );
+        }
+
+        return explode('/', $repository);
     }
 }
