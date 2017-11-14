@@ -32,12 +32,13 @@ final class RectorRunner implements RunnerInterface
         $this->sourceResolver = $sourceResolver;
     }
 
+    public function isActive(): bool
+    {
+        return $this->rectorLevel !== null;
+    }
+
     public function run(string $repositoryDirectory): void
     {
-        if ($this->rectorLevel === null) {
-            return;
-        }
-
         $commandLine = sprintf(
             'vendor/bin/rector process %s --level %s',
             implode(' ', $this->sourceResolver->resolveFromDirectory($repositoryDirectory)),

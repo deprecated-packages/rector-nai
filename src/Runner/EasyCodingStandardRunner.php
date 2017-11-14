@@ -32,12 +32,13 @@ final class EasyCodingStandardRunner implements RunnerInterface
         $this->sourceResolver = $sourceResolver;
     }
 
+    public function isActive(): bool
+    {
+        return $this->ecsLevel !== null;
+    }
+
     public function run(string $repositoryDirectory): void
     {
-        if ($this->ecsLevel === null) {
-            return;
-        }
-
         $commandLine = sprintf(
             'vendor/bin/ecs check %s --config vendor/symplify/easy-coding-standard/config/%s.neon --fix',
             implode(' ', $this->sourceResolver->resolveFromDirectory($repositoryDirectory)),

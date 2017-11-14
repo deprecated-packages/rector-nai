@@ -19,6 +19,11 @@ final class PhpUnitRunner implements RunnerInterface
         $this->symfonyStyle = $symfonyStyle;
     }
 
+    public function isActive(): bool
+    {
+        return true;
+    }
+
     public function run(string $repositoryDirectory): void
     {
         $commandLine = sprintf(
