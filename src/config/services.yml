@@ -21,6 +21,7 @@ services:
 
     Rector\NAI\Application\Application:
         arguments:
+            - '%read_only%'
             - '%workroom_directory%'
             - '%branch_name%'
         public: true

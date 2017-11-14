@@ -54,9 +54,15 @@ final class Application
      */
     private $runners = [];
 
+    /**
+     * @var bool
+     */
+    private $isReadOnly;
+
     public function __construct(
         string $workroomDirectory,
         string $branchName,
+        bool $readOnly,
         ParameterProvider $parameterProvider,
         ComposerUpdater $composerUpdater,
         GitRepository $gitRepository,
@@ -72,6 +78,7 @@ final class Application
         $this->repositoryApi = $repositoryApi;
         $this->pullRequestApi = $pullRequestApi;
         $this->branchName = $branchName;
+        $this->isReadOnly = $readOnly;
     }
 
     public function addRunner(RunnerInterface $runner): void
@@ -88,30 +95,36 @@ final class Application
         $repository = $this->repositoryApi->forks()
             ->create($organizationName, $subName);
 
-        $this->symfonyStyle->success('Fork created');
+        $this->symfonyStyle->note('Fork created');
 
         $repositoryDirectory = $this->workroomDirectory . '/' . $repository['name'];
 
         // get working directory for git
         $gitWorkingCopy = $this->gitRepository->getGitWorkingCopy($repositoryDirectory, $repository);
-        $this->symfonyStyle->success('Fork synced');
+        $this->symfonyStyle->note('Fork synced');
 
         // update dependencies
         $this->composerUpdater->installInDirectory($repositoryDirectory);
-        $this->symfonyStyle->success('Composer dependencies installed');
+        $this->symfonyStyle->note('Composer dependencies installed');
 
         // prepare new branch
         $this->gitRepository->prepareRectorBranch($gitWorkingCopy);
-        $this->symfonyStyle->success(sprintf('Switched to %s branch',  $this->branchName));
+        $this->symfonyStyle->note(sprintf('Switched to %s branch',  $this->branchName));
 
         // use runners here!!
         $this->runRunners($repositoryDirectory);
 
         if (! $gitWorkingCopy->hasChanges()) {
+            $this->symfonyStyle->warning('No changes were made to the code.');
             return;
         }
-        $this->pushAndSendPullRequest($gitWorkingCopy, $organizationName, $subName);
 
+        if ($this->isReadOnly) {
+            $this->symfonyStyle->warning('This is run is read-only. No commit, push and PR.');
+            return;
+        }
+
+        $this->pushAndSendPullRequest($gitWorkingCopy, $organizationName, $subName);
         $this->symfonyStyle->success('Work is done!');
     }
 
