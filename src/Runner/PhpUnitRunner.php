@@ -3,7 +3,6 @@
 namespace Rector\NAI\Runner;
 
 use Rector\NAI\Contract\Runner\RunnerInterface;
-use Rector\NAI\FileSystem\SourceResolver;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
@@ -14,37 +13,30 @@ final class PhpUnitRunner implements RunnerInterface
      * @var SymfonyStyle
      */
     private $symfonyStyle;
-    /**
-     * @var SourceResolver
-     */
-    private $sourceResolver;
 
-    public function __construct(SymfonyStyle $symfonyStyle, SourceResolver $sourceResolver)
+    public function __construct(SymfonyStyle $symfonyStyle)
     {
         $this->symfonyStyle = $symfonyStyle;
-        $this->sourceResolver = $sourceResolver;
     }
 
-    /**
-     *  @todo improve
-     * maybe use $repositoryDirectory here and verify presence of tests and phpunit
-     */
-    public function isActive(): bool
+    public function isActive(string $repositoryDirectory): bool
     {
-        return true;
+        $possiblePhpUnitBin = sprintf('%s/vendor/phpunit/phpunit/phpunit', $repositoryDirectory);
+
+        return file_exists($possiblePhpUnitBin);
     }
 
     public function run(string $repositoryDirectory): void
     {
-        $testDirectory = $this->sourceResolver->resolveTestDirectory($repositoryDirectory);
-        if ($testDirectory === null) {
+        $possiblePhpUnitBin = sprintf('%s/vendor/phpunit/phpunit/phpunit', $repositoryDirectory);
+        if (! file_exists($possiblePhpUnitBin)) {
             return;
         }
 
         $commandLine = sprintf(
             '%s/vendor/phpunit/phpunit/phpunit %s', # safest path
             $repositoryDirectory,
-            $testDirectory
+            $repositoryDirectory
         );
 
         $process = new Process($commandLine);

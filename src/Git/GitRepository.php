@@ -84,6 +84,6 @@ final class GitRepository
         }
 
         $gitWorkingCopy->fetch('upstream');
-        $gitWorkingCopy->merge('upstream/master');
+        $gitWorkingCopy->merge('upstream/master'); # todo might differ | master / develop
     }
 }

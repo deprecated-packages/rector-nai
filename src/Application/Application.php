@@ -143,7 +143,7 @@ final class Application
     private function runRunners(string $repositoryDirectory): void
     {
         foreach ($this->runners as $runner) {
-            if (! $runner->isActive()) {
+            if (! $runner->isActive($repositoryDirectory)) {
                 continue;
             }
 

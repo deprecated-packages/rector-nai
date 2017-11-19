@@ -25,6 +25,11 @@ final class EasyCodingStandardRunner implements RunnerInterface
      */
     private $sourceResolver;
 
+    /**
+     * @var Process|null
+     */
+    private $failedProcess;
+
     public function __construct(?string $ecsLevel, SymfonyStyle $symfonyStyle, SourceResolver $sourceResolver)
     {
         $this->ecsLevel = $ecsLevel;
@@ -32,17 +37,25 @@ final class EasyCodingStandardRunner implements RunnerInterface
         $this->sourceResolver = $sourceResolver;
     }
 
-    public function isActive(): bool
+    public function isActive(string $repositoryDirectory): bool
     {
         return $this->ecsLevel !== null;
     }
 
     public function run(string $repositoryDirectory): void
     {
+        $levels = explode('|', $this->ecsLevel);
+        foreach ($levels as $level) {
+            $this->runForSingleLevel($repositoryDirectory, $level);
+        }
+    }
+
+    private function runForSingleLevel(string $repositoryDirectory, string $level): void
+    {
         $commandLine = sprintf(
-            'vendor/bin/ecs check %s --config vendor/symplify/easy-coding-standard/config/%s.neon --fix',
+            'vendor/bin/ecs check %s --config vendor/symplify/easy-coding-standard/config/%s.neon --fix --clear-cache',
             implode(' ', $this->sourceResolver->resolveFromDirectory($repositoryDirectory)),
-            $this->ecsLevel
+            $level
         );
 
         $process = new Process($commandLine);
@@ -51,7 +64,7 @@ final class EasyCodingStandardRunner implements RunnerInterface
         $process->run();
 
         if (! $process->isSuccessful()) {
-            throw new ProcessFailedException($process);
+            $this->failedProcess = $process;
         }
     }
 }

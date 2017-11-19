@@ -32,7 +32,7 @@ final class RectorRunner implements RunnerInterface
         $this->sourceResolver = $sourceResolver;
     }
 
-    public function isActive(): bool
+    public function isActive(string $repositoryDirectory): bool
     {
         return $this->rectorLevel !== null;
     }

@@ -24,18 +24,4 @@ final class SourceResolver
 
         return $source;
     }
-
-    public function resolveTestDirectory(string $repositoryDirectory): ?string
-    {
-        if (file_exists($repositoryDirectory . '/tests')) {
-            return $repositoryDirectory . '/tests';
-        }
-
-        if (file_exists($repositoryDirectory . '/test')) {
-            return $repositoryDirectory . '/test';
-        }
-
-        // doesn't have tests
-        return null;
-    }
 }
