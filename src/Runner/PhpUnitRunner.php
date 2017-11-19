@@ -28,15 +28,13 @@ final class PhpUnitRunner implements RunnerInterface
 
     public function run(string $repositoryDirectory): void
     {
-        $possiblePhpUnitBin = sprintf('%s/vendor/phpunit/phpunit/phpunit', $repositoryDirectory);
-        if (! file_exists($possiblePhpUnitBin)) {
-            return;
-        }
+        $phpunitConfig = $this->resolvePhpUnitConfig($repositoryDirectory);
 
         $commandLine = sprintf(
             '%s/vendor/phpunit/phpunit/phpunit %s', # safest path
             $repositoryDirectory,
-            $repositoryDirectory
+            $repositoryDirectory,
+            $phpunitConfig ? ' -c ' . $phpunitConfig : ''
         );
 
         $process = new Process($commandLine);
@@ -47,5 +45,18 @@ final class PhpUnitRunner implements RunnerInterface
         if (! $process->isSuccessful()) {
             throw new ProcessFailedException($process);
         }
+    }
+
+    private function resolvePhpUnitConfig(string $repositoryDirectory): ?string
+    {
+        if (file_exists($repositoryDirectory . '/phpunit.xml')) {
+            return $repositoryDirectory . '/phpunit.xml';
+        }
+
+        if (file_exists($repositoryDirectory . '/phpunit.xml.dist')) {
+            return $repositoryDirectory . '/phpunit.xml.dist';
+        }
+
+        return null;
     }
 }
