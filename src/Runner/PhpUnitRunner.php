@@ -33,7 +33,6 @@ final class PhpUnitRunner implements RunnerInterface
         $commandLine = sprintf(
             '%s/vendor/phpunit/phpunit/phpunit %s', # safest path
             $repositoryDirectory,
-            $repositoryDirectory,
             $phpunitConfig ? ' -c ' . $phpunitConfig : ''
         );
 
@@ -45,6 +44,8 @@ final class PhpUnitRunner implements RunnerInterface
         if (! $process->isSuccessful()) {
             throw new ProcessFailedException($process);
         }
+
+        $this->symfonyStyle->success('Tests passed!');
     }
 
     private function resolvePhpUnitConfig(string $repositoryDirectory): ?string
