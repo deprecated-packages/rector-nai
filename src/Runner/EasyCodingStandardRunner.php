@@ -53,7 +53,7 @@ final class EasyCodingStandardRunner implements RunnerInterface
     private function runForSingleLevel(string $repositoryDirectory, string $level): void
     {
         $commandLine = sprintf(
-            'vendor/bin/ecs check %s --level %s.neon --fix --clear-cache',
+            'vendor/bin/ecs check %s --level %s --fix --clear-cache',
             implode(' ', $this->sourceResolver->resolveFromDirectory($repositoryDirectory)),
             $level
         );
