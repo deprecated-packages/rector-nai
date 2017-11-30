@@ -7,7 +7,7 @@ final class SourceResolver
     /**
      * @var string[]
      */
-    private $possiblePaths = ['/application', '/system', '/src', '/lib', '/test', '/tests', '/spec'];
+    private $possiblePaths = ['/application', '/system', '/src', '/lib', '/test', '/tests', '/spec', '/framework'];
 
     /**
      * @return string[]
