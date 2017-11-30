@@ -10,6 +10,7 @@ services:
         arguments:
             - '%git_name%'
             - '%git_email%'
+            - '%master_branch_name%'
             - '%branch_name%'
 
     # runners

@@ -12,23 +12,37 @@ final class GitRepository
      * @var GitWrapper
      */
     private $gitWrapper;
+
     /**
      * @var string
      */
     private $gitName;
+
     /**
      * @var string
      */
     private $gitEmail;
+
+    /**
+     * @var string
+     */
+    private $masterBranchName;
+
     /**
      * @var string
      */
     private $branchName;
 
-    public function __construct(string $gitName, string $gitEmail, string $branchName, GitWrapper $gitWrapper)
-    {
+    public function __construct(
+        string $gitName,
+        string $gitEmail,
+        string $masterBranchName,
+        string $branchName,
+        GitWrapper $gitWrapper
+    ) {
         $this->gitName = $gitName;
         $this->gitEmail = $gitEmail;
+        $this->masterBranchName = $masterBranchName;
         $this->branchName = $branchName;
         $this->gitWrapper = $gitWrapper;
     }
@@ -43,7 +57,8 @@ final class GitRepository
         }
 
         $gitWorkingCopy = $this->gitWrapper->cloneRepository($repository['ssh_url'], $repositoryDirectory, [
-            'depth' => 1
+            'depth' => 1,
+            'branch' => $this->masterBranchName
         ]);
 
         $gitWorkingCopy->config('user.name', $this->gitName);
@@ -83,7 +98,8 @@ final class GitRepository
             $gitWorkingCopy->addRemote('upstream', $repository['source']['clone_url']);
         }
 
+        $gitWorkingCopy->checkout($this->masterBranchName);
         $gitWorkingCopy->fetch('upstream');
-        $gitWorkingCopy->merge('upstream/master'); # todo might differ | master / develop
+        $gitWorkingCopy->merge('upstream/' . $this->masterBranchName);
     }
 }
