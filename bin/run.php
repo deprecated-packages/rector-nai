@@ -9,7 +9,7 @@ use Rector\NAI\Application\Application;
 use Rector\NAI\DependencyInjection\ContainerFactory;
 
 // nicer error messages
-(new NunoMaduro\Collision\Provider)->register();
+//(new NunoMaduro\Collision\Provider)->register();
 
 $container = (new ContainerFactory())->createWithConfig(__DIR__ . '/../rector.yml');
 $application = $container->get(Application::class);

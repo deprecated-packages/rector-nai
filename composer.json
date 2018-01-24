@@ -7,15 +7,14 @@
         "knplabs/github-api": "^2.6",
         "nette/di": "^2.4",
         "nette/updater": "@dev",
-        "nikic/php-parser": "dev-master as v3.1.1",
-        "nunomaduro/collision": "^1.1",
+        "nikic/php-parser": "4.0.x-dev as 3.0",
         "php-http/guzzle6-adapter": "^1.1",
         "rector/rector": "dev-master",
-        "symfony/symfony": "^3.4|^4.0",
+        "symfony/console": "^4.0",
+        "symfony/dependency-injection": "^4.0",
+        "symfony/http-kernel": "^4.0",
         "symplify/coding-standard": "^3.0",
-        "symplify/easy-coding-standard": "^3.0",
-        "symplify/package-builder": "^3.0",
-        "symplify/token-runner": "^3.0"
+        "symplify/easy-coding-standard": "^3.0"
     },
     "require-dev": {
         "tracy/tracy": "^2.4"
@@ -28,5 +27,6 @@
     "config": {
         "sort-packages": true
     },
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
