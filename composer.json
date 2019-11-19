@@ -2,22 +2,20 @@
     "name": "rector/narrow-intelligence",
     "description": "Narrow AI to automate and replace Tomas Votruba",
     "require": {
+        "php": "^7.2",
         "cache/filesystem-adapter": "^1.0",
-        "cpliakas/git-wrapper": "^1.7",
+        "cpliakas/git-wrapper": "^2.2",
         "knplabs/github-api": "^2.6",
-        "nette/di": "^2.4",
-        "nette/updater": "@dev",
-        "nikic/php-parser": "4.0.x-dev as 3.0",
         "php-http/guzzle6-adapter": "^1.1",
-        "rector/rector": "dev-master",
+        "rector/rector": "^0.5.22",
         "symfony/console": "^4.0",
         "symfony/dependency-injection": "^4.0",
         "symfony/http-kernel": "^4.0",
-        "symplify/coding-standard": "^3.0",
-        "symplify/easy-coding-standard": "^3.0"
+        "symplify/coding-standard": "^6.1",
+        "symplify/easy-coding-standard": "^6.1"
     },
     "require-dev": {
-        "tracy/tracy": "^2.4"
+        "tracy/tracy": "^2.7"
     },
     "autoload": {
         "psr-4": {
